@@ -2,33 +2,14 @@
 
 ####################
 
-echo Setup: Enable password login
-
-sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-### Set password: sudo passwd ubuntu
-sudo service sshd restart
-
-####################
-
-echo Setup: Install remote desktop
-
-sudo apt update
-sudo apt install -y ubuntu-desktop xrdp
-
-sudo service xrdp restart
-sudo apt install -y xfce4 xfce4-goodies
-echo xfce4-session >~/.xsession
-
-####################
-
-echo Setup: Install go \(currently limited to version 1.12.12\)
+echo Setup: Install go \(currently limited to version 1.13.9\)
 
 sudo apt-get update -y -q
 
 cd /tmp
-wget https://dl.google.com/go/go1.12.12.linux-amd64.tar.gz
-sudo tar -C /usr/local -xzf go1.12.12.linux-amd64.tar.gz
-rm -rf go1.12.12.linux-amd64.tar.gz
+wget https://dl.google.com/go/go1.13.9.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.13.9.linux-amd64.tar.gz
+rm -rf go1.13.9.linux-amd64.tar.gz
 
 ####################
 
@@ -43,25 +24,12 @@ chmod +x bazel-0.26.1-installer-linux-x86_64.sh
 
 ####################
 
-echo Setup: Install goland
-
-cd /tmp
-wget https://download.jetbrains.com/go/goland-2019.3.4.tar.gz
-tar -xzf goland-2019.3.4.tar.gz
-mv GoLand-2019.3.4 ~/GoLand-2019.3.4
-
-echo fs.inotify.max_user_watches=524288 > ./max_user_watches.conf
-sudo mv ./max_user_watches.conf /etc/sysctl.d/
-sudo sysctl -p --system
-
-####################
-
-echo Setup: Enlist arktos
+echo Setup: Enlist compute
 
 cd ~
-git clone https://github.com/centaurus-cloud/arktos.git ~/go/src/k8s.io/arktos
+git clone https://github.com/Open5g-cloud/compute.git ~/go/src/k8s.io/compute
 cd ~/go/src/k8s.io
-ln -s ./arktos kubernetes
+ln -s ./compute kubernetes
 
 git config --global credential.helper 'cache --timeout=3600000'
 
@@ -69,7 +37,7 @@ git config --global credential.helper 'cache --timeout=3600000'
 
 echo Setup: Install etcd
 
-cd ~/go/src/k8s.io/arktos/
+cd ~/go/src/k8s.io/compute/
 git tag v1.15.0
 ./hack/install-etcd.sh
 
@@ -77,27 +45,8 @@ git tag v1.15.0
 
 echo Setup: Install Docker
 
-sudo apt-get update -y -q
-
-sudo apt-get install \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg-agent \
-    software-properties-common -y -q
-
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo apt-key fingerprint 0EBFCD88
-
-sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-   $(lsb_release -cs) \
-   stable"
-
-sudo apt-get update -y -q
-sudo apt-get install docker-ce docker-ce-cli containerd.io -y -q
+sudo apt -y install docker.io
 sudo gpasswd -a $USER docker
-
 
 ####################
 
@@ -105,8 +54,8 @@ echo Setup: Install crictl
 
 cd /tmp
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.17.0/crictl-v1.17.0-linux-amd64.tar.gz
-sudo tar zxvf crictl-v1.17.0-linux-amd64.tar.gz -C /usr/local/bin 
-rm -f crictl-v1.17.0-linux-amd64.tar.gz 
+sudo tar zxvf crictl-v1.17.0-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-v1.17.0-linux-amd64.tar.gz
 
 touch /tmp/crictl.yaml
 echo runtime-endpoint: unix:///run/containerd/containerd.sock >> /tmp/crictl.yaml
@@ -138,9 +87,9 @@ GO111MODULE="on" go get sigs.k8s.io/kind@v0.7.0
 
 ####################
 
-echo Setup: Mizar Related
+echo Setup: Network Related
 
-cd ~/mizar
+cd ~/network
 sudo apt-get update
 sudo apt-get install -y \
     build-essential clang-7 llvm-7 \
@@ -185,36 +134,24 @@ pip3 install PyYAML
 
 ####################
 
-echo Setup: Change Containerd
-
-wget -qO- https://github.com/futurewei-cloud/containerd/releases/download/tenant-cni-args/containerd.zip | zcat > /tmp/containerd
-chmod +x /tmp/containerd
-sudo systemctl stop containerd
-sudo mv /usr/bin/containerd /usr/bin/containerd.bak
-sudo mv /tmp/containerd /usr/bin/
-sudo systemctl restart containerd
-sudo systemctl start docker
-
-####################
-
 echo Setup: Setup profile
 
-echo PATH=\"\$HOME/go/src/k8s.io/arktos/third_party/etcd:/usr/local/go/bin:\$HOME/go/bin:\$HOME/go/src/k8s.io/arktos/_output/bin:\$HOME/go/src/k8s.io/arktos/_output/dockerized/bin/linux/amd64:\$PATH\" >> ~/.profile
+echo PATH=\"\$HOME/go/src/k8s.io/compute/third_party/etcd:/usr/local/go/bin:\$HOME/go/bin:\$HOME/go/src/k8s.io/compute/_output/bin:\$HOME/go/src/k8s.io/compute/_output/dockerized/bin/linux/amd64:\$PATH\" >> ~/.profile
 echo GOPATH=\"\$HOME/go\" >> ~/.profile
 echo GOROOT=\"/usr/local/go\" >> ~/.profile
 echo >> ~/.profile
-echo alias arktos=\"cd \$HOME/go/src/k8s.io/arktos\" >> ~/.profile
+echo alias compute=\"cd \$HOME/go/src/k8s.io/compute\" >> ~/.profile
 echo alias k8s=\"cd \$HOME/go/src/k8s.io/kubernetes\" >> ~/.profile
-echo alias mizar=\"cd \$HOME/mizar\" >> ~/.profile
-echo alias up=\"\$HOME/go/src/k8s.io/arktos/hack/arktos-up.sh\" >> ~/.profile
+echo alias network=\"cd \$HOME/network\" >> ~/.profile
+echo alias up=\"\$HOME/go/src/k8s.io/compute/hack/compute-up.sh\" >> ~/.profile
 echo alias status=\"git status\" >> ~/.profile
-echo alias pods=\"kubectl get pods -o wide\" >> ~/.profile
+echo alias pods=\"kubectl get pods -A -o wide\" >> ~/.profile
 echo alias nets=\"echo 'kubectl get subnets'\; kubectl get subnets\; echo\; echo 'kubectl get droplets'\; kubectl get droplets\; echo\; echo 'kubectl get bouncers'\; kubectl get bouncers\; echo\; echo 'kubectl get dividers'\; kubectl get dividers\; echo\; echo 'kubectl get vpcs'\; kubectl get vpcs\; echo\; echo 'kubectl get eps'\; kubectl get eps\; echo\; echo 'kubectl get networks'\; kubectl get networks\" >> ~/.profile
 
-echo export PYTHONPATH=\"\$HOME/mizar/\" >> ~/.profile
+echo export PYTHONPATH=\"\$HOME/network/\" >> ~/.profile
 echo export GPG_TTY=\$\(tty\) >> ~/.profile
 
-echo cd \$HOME/go/src/k8s.io/arktos >> ~/.profile
+echo cd \$HOME/go/src/k8s.io/compute >> ~/.profile
 
 source "$HOME/.profile"
 

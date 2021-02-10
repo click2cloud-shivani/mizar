@@ -56,8 +56,8 @@ function check_ready() {
 }
 
 CWD=$(pwd)
-KINDCONF="${HOME}/mizar/build/tests/kind/config"
-MIZARCONF="${HOME}/mizar/build/tests/mizarcni.config"
+KINDCONF="${HOME}/network/build/tests/kind/config"
+MIZARCONF="${HOME}/network/build/tests/networkcni.config"
 KINDHOME="${HOME}/.kube/config"
 USER=${1:-user}
 NODES=${2:-3}

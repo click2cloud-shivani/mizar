@@ -21,15 +21,16 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 # THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-DIR=${1:-.}
-DIR="${DIR}/mizar-k8s"
 
-# Installing mizar cni
+DIR=${1:-.}
+DIR="${DIR}/network-k8s"
+
+# Installing network cni
 api_ip=`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' kind-control-plane`
 sed "s/server: https:\/\/127.0.0.1:[[:digit:]]\+/server: https:\/\/$api_ip:6443/" ~/.kube/config > /tmp/config
-docker cp /tmp/config kind-control-plane:/etc/mizarcni.config
-docker cp $DIR/cni/10-mizarcni.conf kind-control-plane:/etc/cni/net.d/10-mizarcni.conf
-docker cp $DIR/cni/mizarcni.py kind-control-plane:/opt/cni/bin/mizarcni.py
+docker cp /tmp/config kind-control-plane:/etc/networkcni.config
+docker cp $DIR/cni/10-networkcni.conf kind-control-plane:/etc/cni/net.d/10-networkcni.conf
+docker cp $DIR/cni/networkcni.py kind-control-plane:/opt/cni/bin/networkcni.py
 
 # Removing exisiting kind CNI
 docker exec kind-control-plane rm /etc/cni/net.d/10-kindnet.conflist
